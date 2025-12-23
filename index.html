@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Công cụ Tìm kiếm & Trích xuất Học thuật Cá nhân</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+<body class="bg-gray-50 text-gray-900">
+
+<!-- HEADER -->
+<header class="text-center py-10">
+  <h1 class="text-3xl font-bold text-indigo-600">
+    Công cụ Tìm kiếm & Trích xuất Học thuật Cá nhân
+  </h1>
+  <p class="mt-2 text-gray-500">
+    Giao diện kiểu Google Scholar Labs
+  </p>
+</header>
+
+<!-- MAIN -->
+<main class="max-w-7xl mx-auto px-6">
+
+  <div class="grid grid-cols-12 gap-6">
+
+    <!-- FILTER -->
+    <aside class="col-span-3 space-y-6">
+
+      <div class="bg-white p-4 rounded-lg shadow">
+        <h3 class="font-semibold mb-3">Thời gian</h3>
+
+        <label class="flex items-center gap-2 text-sm mb-2">
+          <input type="radio" name="year" value="" checked>
+          Bất kỳ
+        </label>
+
+        <label class="flex items-center gap-2 text-sm mb-2">
+          <input type="radio" name="year" value="5">
+          5 năm
+        </label>
+
+        <label class="flex items-center gap-2 text-sm">
+          <input type="radio" name="year" value="10">
+          10 năm
+        </label>
+
+        <hr class="my-4">
+
+        <h3 class="font-semibold mb-3">Bộ lọc Kết quả</h3>
+
+        <label class="flex items-center gap-2 text-sm mb-2">
+          <input type="checkbox" id="hasAbstract"> Có tóm tắt
+        </label>
+
+        <label class="flex items-center gap-2 text-sm mb-2">
+          <input type="checkbox" id="freeFullText"> Toàn văn miễn phí
+        </label>
+
+        <label class="flex items-center gap-2 text-sm mb-2">
+          <input type="checkbox" id="medline"> MEDLINE
+        </label>
+
+        <label class="flex items-center gap-2 text-sm">
+          <input type="checkbox" id="excludePreprint"> Loại trừ Preprints
+        </label>
+      </div>
+<div class="bg-white p-4 rounded-lg shadow">
+  <h3 class="font-semibold mb-3">Lịch sử tìm kiếm</h3>
+  <ul id="searchHistory" class="space-y-2 text-sm text-indigo-600"></ul>
+</div>
+    </aside>
+
+    <!-- SEARCH + RESULT -->
+    <section class="col-span-9 space-y-6">
+
+      <div class="flex gap-4">
+        <input id="query" type="text"
+               class="flex-1 border rounded px-4 py-3"
+               placeholder="Nhập từ khóa học thuật">
+
+        <button onclick="searchScholar()"
+                class="bg-indigo-600 text-white px-6 py-3 rounded hover:bg-indigo-700">
+          Tìm kiếm
+        </button>
+
+        <select class="border rounded px-3 py-3 text-sm">
+          <option>Liên quan</option>
+          <option>Mới nhất</option>
+        </select>
+      </div>
+
+      <div id="loading" class="hidden text-gray-500">
+        Đang tìm kiếm...
+      </div>
+      <div class="flex gap-3 mb-4">
+  <button onclick="exportBibTeX()"
+          class="bg-green-600 text-white px-4 py-2 rounded text-sm">
+    Xuất BibTeX
+  </button>
+
+  <button onclick="exportCSV()"
+          class="bg-blue-600 text-white px-4 py-2 rounded text-sm">
+    Xuất CSV
+  </button>
+</div>
+      <div id="results" class="space-y-4"></div>
+
+    </section>
+
+  </div>
+
+</main>
+
+<!-- SCRIPT -->
+<script>
+const API_URL = "https://scholar-proxy.tm-b30.workers.dev/";
+let LAST_RESULTS = [];
+
+function showLoading() {
+  document.getElementById("loading").classList.remove("hidden");
+  document.getElementById("results").innerHTML = "";
+}
+
+function hideLoading() {
+  document.getElementById("loading").classList.add("hidden");
+}
+function highlight(text, keyword) {
+  if (!keyword) return text;
+  return text.replace(
+    new RegExp("(" + keyword + ")", "gi"),
+    "<mark class='bg-yellow-200'>$1</mark>"
+  );
+}
+function renderResults(items) {
+  const container = document.getElementById("results");
+  container.innerHTML = "";
+
+  if (!items || items.length === 0) {
+    container.innerHTML =
+      "<p class='text-gray-500'>Không có kết quả phù hợp.</p>";
+    return;
+  }
+
+  items.forEach((item, index) => {
+    const keyword = document.getElementById("query").value.trim();
+    const title = highlight(item.title || "Không tiêu đề", keyword);
+    const link = item.link || "#";
+    const snippet = highlight(item.snippet || "", keyword);
+
+    const publication =
+      item.publication_info?.summary || "";
+
+    const authors =
+      item.publication_info?.authors
+        ? item.publication_info.authors.map(a => a.name).join(", ")
+        : "";
+
+    const cited =
+      item.inline_links?.cited_by?.total
+        ? `⭐ Trích dẫn: ${item.inline_links.cited_by.total}`
+        : "";
+
+    const pdf =
+      item.resources && item.resources.length > 0
+        ? item.resources.find(r => r.file_format === "PDF")
+        : null;
+
+    const div = document.createElement("div");
+    div.className = "bg-white p-5 rounded-lg shadow space-y-2 relative";
+    div.className = "bg-white p-5 rounded-lg shadow space-y-2";
+
+    div.innerHTML = `
+  <div class="flex items-start gap-3">
+    <input type="checkbox"
+           class="select-item mt-1"
+           data-index="${index}">
+
+    <div class="flex-1 space-y-2">
+      <h3 class="text-lg font-semibold text-indigo-600">
+        <a href="${link}" target="_blank">${title}</a>
+      </h3>
+
+      <p class="text-sm text-gray-600">${authors}</p>
+      <p class="text-sm text-gray-500">${publication}</p>
+      <p class="text-sm text-gray-700">${snippet}</p>
+
+      <div class="flex gap-3 text-xs mt-2">
+        ${pdf ? `<span class="bg-green-100 text-green-700 px-2 py-1 rounded">PDF</span>` : ""}
+        ${cited ? `<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">${cited}</span>` : ""}
+        ${snippet ? `<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded">Abstract</span>` : ""}
+      </div>
+
+      ${pdf ? `<a href="${pdf.link}" target="_blank" class="text-green-600 text-sm">📄 PDF</a>` : ""}
+    </div>
+</div>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+async function searchScholar() {
+  const q = document.getElementById("query").value.trim();
+
+  if (!q) {
+    alert("Vui lòng nhập từ khóa học thuật");
+    return;
+  }
+
+  showLoading();
+  saveSearch(q);
+  try {
+    const res = await fetch(API_URL + "?q=" + encodeURIComponent(q));
+    const data = await res.json();
+    hideLoading();
+    LAST_RESULTS = data.organic_results || [];
+    renderResults(LAST_RESULTS);
+  } catch (e) {
+    hideLoading();
+    document.getElementById("results").innerHTML =
+      "<p class='text-red-500'>Lỗi khi kết nối API.</p>";
+  }
+}
+function saveSearch(keyword) {
+  let history = JSON.parse(localStorage.getItem("searchHistory")) || [];
+
+  if (!history.includes(keyword)) {
+    history.unshift(keyword);
+  }
+
+  history = history.slice(0, 5);
+  localStorage.setItem("searchHistory", JSON.stringify(history));
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById("searchHistory");
+  if (!list) return;
+
+  const history = JSON.parse(localStorage.getItem("searchHistory")) || [];
+  list.innerHTML = "";
+
+  history.forEach(keyword => {
+    const li = document.createElement("li");
+    li.innerHTML =
+      "<a href='#' onclick=\"runFromHistory('" + keyword + "')\">" +
+      keyword +
+      "</a>";
+    list.appendChild(li);
+  });
+}
+
+function runFromHistory(keyword) {
+  document.getElementById("query").value = keyword;
+  searchScholar();
+}
+function getSelectedItems() {
+  const checkboxes = document.querySelectorAll(".select-item:checked");
+  const results = [];
+
+  checkboxes.forEach(cb => {
+    const idx = parseInt(cb.dataset.index);
+    if (!isNaN(idx) && LAST_RESULTS[idx]) {
+      results.push(LAST_RESULTS[idx]);
+    }
+  });
+
+  return results;
+}
+
+function exportBibTeX() {
+  const items = getSelectedItems();
+
+  if (items.length === 0) {
+    alert("Vui lòng chọn ít nhất 1 bài để xuất");
+    return;
+  }
+
+  let bib = "";
+
+  items.forEach((item, i) => {
+    const authors =
+      item.publication_info?.authors
+        ? item.publication_info.authors.map(a => a.name).join(" and ")
+        : "Unknown";
+
+    const year =
+      item.publication_info?.year || "????";
+
+    bib += `@article{ref${i},
+  title={${item.title || ""}},
+  author={${authors}},
+  year={${year}},
+  url={${item.link || ""}}
+}\n\n`;
+  });
+
+  downloadFile("citations.bib", bib);
+}
+
+function exportCSV() {
+  const items = getSelectedItems();
+
+  if (items.length === 0) {
+    alert("Vui lòng chọn ít nhất 1 bài để xuất");
+    return;
+  }
+
+  let csv = "Title,Authors,Year,Link\n";
+
+  items.forEach(item => {
+    const title = `"${(item.title || "").replace(/"/g, '""')}"`;
+    const authors = `"${item.publication_info?.authors
+      ?.map(a => a.name).join("; ") || ""}"`;
+    const year = item.publication_info?.year || "";
+    const link = item.link || "";
+
+    csv += `${title},${authors},${year},${link}\n`;
+  });
+
+  downloadFile("citations.csv", csv);
+}
+
+function downloadFile(filename, content) {
+  const blob = new Blob([content], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+</script>
+
+</body>
+</html>
