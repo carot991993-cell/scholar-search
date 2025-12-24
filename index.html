@@ -11,12 +11,12 @@
 <body class="bg-gray-50 text-gray-900">
 
 <!-- HEADER -->
-<header class="text-center py-10">
-  <h1 class="text-3xl font-bold text-indigo-600">
+<header class="text-center py-8 border-b">
+  <h1 class="text-2xl font-semibold text-indigo-700">
     Công cụ Tìm kiếm & Trích xuất Học thuật Cá nhân
   </h1>
-  <p class="mt-2 text-gray-500">
-    Giao diện kiểu Google Scholar Labs
+  <p class="mt-1 text-sm text-gray-500">
+    Giao diện nghiên cứu kiểu Google Scholar
   </p>
 </header>
 
@@ -27,24 +27,90 @@
 
     <!-- FILTER -->
     <aside class="col-span-3 space-y-6">
+<!-- PROFILE HỌC THUẬT -->
+<div class="bg-white p-4 rounded-lg shadow">
 
+  <div class="flex gap-4 items-start">
+
+    <!-- AVATAR -->
+    <img
+      src="avatar.jpg"
+      class="w-14 h-14 rounded-full object-cover"
+      alt="Avatar">
+
+    <!-- INFO -->
+    <div class="space-y-2 text-sm leading-relaxed">
+
+      <div>
+        <p class="font-semibold text-base text-gray-900">
+          Nguyễn Kim Toán
+        </p>
+        <p class="text-gray-600">
+          MSc. Business Administration
+        </p>
+      </div>
+
+      <ul class="list-disc list-inside space-y-1 text-gray-700">
+        <li>FDI & Governance</li>
+        <li>Digital Transformation</li>
+        <li>AI in Management</li>
+        <li>Green Tourism</li>
+      </ul>
+
+      <div class="pt-2 space-y-1 text-indigo-600">
+        <a href="mailto:carot991993@gmail.com" class="block hover:underline">
+          Email
+        </a>
+        <a href="#" class="block hover:underline">
+          Google Scholar
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+</div>
       <div class="bg-white p-4 rounded-lg shadow">
         <h3 class="font-semibold mb-3">Thời gian</h3>
 
-        <label class="flex items-center gap-2 text-sm mb-2">
-          <input type="radio" name="year" value="" checked>
-          Bất kỳ
-        </label>
+<div class="space-y-2 text-sm">
 
-        <label class="flex items-center gap-2 text-sm mb-2">
-          <input type="radio" name="year" value="5">
-          5 năm
-        </label>
+  <label class="flex items-center gap-2">
+    <input type="radio" name="timeRange" value="any" checked>
+    Any time 
+  </label>
 
-        <label class="flex items-center gap-2 text-sm">
-          <input type="radio" name="year" value="10">
-          10 năm
-        </label>
+  <label class="flex items-center gap-2">
+    <input type="radio" name="timeRange" value="1">
+    1 year
+  </label>
+
+  <label class="flex items-center gap-2">
+    <input type="radio" name="timeRange" value="5">
+    5 years
+  </label>
+
+  <label class="flex items-center gap-2">
+    <input type="radio" name="timeRange" value="10">
+    10 years
+  </label>
+
+  <label class="flex items-center gap-2">
+    <input type="radio" name="timeRange" value="custom">
+    Custom 
+  </label>
+
+</div>
+
+<!-- CUSTOM RANGE -->
+<div id="customYearBox" class="hidden mt-3 space-y-2 text-sm">
+  <div class="flex gap-2">
+    <input id="yearFrom" type="number" placeholder="Từ năm"
+           class="w-1/2 border rounded px-2 py-1 text-sm">
+    <input id="yearTo" type="number" placeholder="Đến năm"
+           class="w-1/2 border rounded px-2 py-1 text-sm">
+  </div>
+</div>
 
         <hr class="my-4">
 
@@ -75,9 +141,9 @@
     <!-- SEARCH + RESULT -->
     <section class="col-span-9 space-y-6">
 
-      <div class="flex gap-4">
+      <div class="flex gap-3 items-center">
         <input id="query" type="text"
-               class="flex-1 border rounded px-4 py-3"
+               class="flex-1 border rounded px-4 py-2 text-sm"
                placeholder="Nhập từ khóa học thuật">
 
         <button onclick="searchScholar()"
@@ -111,6 +177,51 @@
 
   </div>
 
+<!-- FOOTER / EXTRA CONTENT -->
+<section class="mt-16 border-t pt-10">
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-sm text-gray-700">
+
+    <div>
+      <h3 class="font-semibold text-gray-900 mb-3">
+        Về công cụ
+      </h3>
+      <p class="leading-relaxed">
+        Công cụ tìm kiếm & trích xuất học thuật cá nhân,
+        hỗ trợ tổng quan tài liệu, trích dẫn và nghiên cứu khoa học
+        theo phong cách Google Scholar Labs.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="font-semibold text-gray-900 mb-3">
+        Ứng dụng nghiên cứu
+      </h3>
+      <ul class="list-disc list-inside space-y-1">
+        <li>Tổng quan tài liệu (Literature Review)</li>
+        <li>Phân tích xu hướng nghiên cứu</li>
+        <li>Chuẩn bị luận văn, bài báo</li>
+        <li>Xuất trích dẫn BibTeX / CSV</li>
+      </ul>
+    </div>
+
+    <div>
+      <h3 class="font-semibold text-gray-900 mb-3">
+        Lưu ý học thuật
+      </h3>
+      <p class="leading-relaxed">
+        Dữ liệu được truy xuất phục vụ mục đích học tập và nghiên cứu.
+        Người dùng cần kiểm chứng lại nguồn trước khi trích dẫn chính thức.
+      </p>
+    </div>
+
+  </div>
+
+  <div class="mt-10 text-center text-xs text-gray-500">
+    © 2025 – Personal Academic Search Tool · For research & learning
+  </div>
+
+</section>
 </main>
 
 <!-- SCRIPT -->
@@ -203,7 +314,17 @@ function renderResults(items) {
 
 async function searchScholar() {
   const q = document.getElementById("query").value.trim();
+const timeRange = document.querySelector(
+  'input[name="timeRange"]:checked'
+).value;
 
+let yearFrom = null;
+let yearTo = null;
+
+if (timeRange === "custom") {
+  yearFrom = document.getElementById("yearFrom").value;
+  yearTo = document.getElementById("yearTo").value;
+}
   if (!q) {
     alert("Vui lòng nhập từ khóa học thuật");
     return;
@@ -279,7 +400,10 @@ function exportBibTeX() {
   }
 
   let bib = "";
-
+bibtex += "% =====================================\n";
+bibtex += "% Exported by: Nguyen Kim Toan\n";
+bibtex += "% Personal Academic Scholar Tool\n";
+bibtex += "% =====================================\n\n";
   items.forEach((item, i) => {
     const authors =
       item.publication_info?.authors
@@ -334,6 +458,16 @@ function downloadFile(filename, content) {
 
   URL.revokeObjectURL(url);
 }
+document.querySelectorAll('input[name="timeRange"]').forEach(radio => {
+  radio.addEventListener("change", () => {
+    const customBox = document.getElementById("customYearBox");
+    if (radio.value === "custom" && radio.checked) {
+      customBox.classList.remove("hidden");
+    } else {
+      customBox.classList.add("hidden");
+    }
+  });
+});
 </script>
 
 </body>
