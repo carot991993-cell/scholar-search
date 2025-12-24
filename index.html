@@ -35,7 +35,7 @@
     <!-- AVATAR -->
     <img
       src="avatar.jpg"
-      class="w-14 h-14 rounded-full object-cover"
+      class="w-16 h-16 rounded-full object-cover border"
       alt="Avatar">
 
     <!-- INFO -->
@@ -50,12 +50,12 @@
         </p>
       </div>
 
-      <ul class="list-disc list-inside space-y-1 text-gray-700">
-        <li>FDI & Governance</li>
-        <li>Digital Transformation</li>
-        <li>AI in Management</li>
-        <li>Green Tourism</li>
-      </ul>
+      <div class="flex flex-wrap gap-2 text-xs mt-2">
+  <span class="bg-gray-100 px-2 py-1 rounded">FDI & Governance</span>
+  <span class="bg-gray-100 px-2 py-1 rounded">Digital Transformation</span>
+  <span class="bg-gray-100 px-2 py-1 rounded">AI in Management</span>
+  <span class="bg-gray-100 px-2 py-1 rounded">Green Tourism</span>
+</div>
 
       <div class="pt-2 space-y-1 text-indigo-600">
         <a href="mailto:carot991993@gmail.com" class="block hover:underline">
@@ -134,12 +134,17 @@
       </div>
 <div class="bg-white p-4 rounded-lg shadow">
   <h3 class="font-semibold mb-3">Lịch sử tìm kiếm</h3>
-  <ul id="searchHistory" class="space-y-2 text-sm text-indigo-600"></ul>
+  <ul id="searchHistory"
+    class="space-y-2 text-sm text-indigo-600">
+  <li class="text-gray-400 italic">
+    Chưa có tìm kiếm nào
+  </li>
+</ul>
 </div>
     </aside>
 
     <!-- SEARCH + RESULT -->
-    <section class="col-span-9 space-y-6">
+    <section class="col-span-6 space-y-6">
 
       <div class="flex gap-3 items-center">
         <input id="query" type="text"
@@ -171,9 +176,53 @@
     Xuất CSV
   </button>
 </div>
-      <div id="results" class="space-y-4"></div>
+      <div id="results" class="space-y-4 text-sm text-gray-500">
+  <div class="border rounded p-6 bg-white">
+    <p class="mb-2 font-medium text-gray-700">
+      👋 Chào mừng bạn
+    </p>
+    <p>
+      Nhập từ khóa học thuật để bắt đầu tìm kiếm tài liệu nghiên cứu.
+      Kết quả sẽ hiển thị tại đây.
+    </p>
+  </div>
+</div>
 
     </section>
+<!-- PANEL GHIM -->
+<aside class="col-span-3 space-y-4">
+
+  <div class="bg-white p-4 rounded-lg shadow sticky top-6">
+
+    <h3 class="font-semibold mb-3 text-indigo-700">
+      ⭐ Bài đã ghim
+    </h3>
+<input
+  id="pinnedSearch"
+  type="text"
+  placeholder="Tìm trong bài đã ghim..."
+  class="w-full border rounded px-2 py-1 text-sm mb-3"
+  oninput="renderPinnedPanel(this.value)">
+<button
+  onclick="exportPinnedBibTeX()"
+  class="mb-3 text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
+  ⬇ Xuất BibTeX bài đã ghim
+</button>
+<button
+  onclick="exportPinnedCSV()"
+  class="mb-3 text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+  ⬇ Xuất CSV bài đã ghim
+</button>
+    <div id="pinnedPanel"
+         class="space-y-3 text-sm text-gray-700">
+      <p class="text-gray-400 italic">
+        Chưa có bài nào được ghim
+      </p>
+    </div>
+
+  </div>
+
+</aside>
 
   </div>
 
@@ -228,6 +277,7 @@
 <script>
 const API_URL = "https://scholar-proxy.tm-b30.workers.dev/";
 let LAST_RESULTS = [];
+let PINNED_ITEMS = JSON.parse(localStorage.getItem("pinnedItems")) || [];
 
 function showLoading() {
   document.getElementById("loading").classList.remove("hidden");
@@ -277,6 +327,7 @@ function renderResults(items) {
       item.resources && item.resources.length > 0
         ? item.resources.find(r => r.file_format === "PDF")
         : null;
+const pinned = isPinned(item.link);
 
     const div = document.createElement("div");
     div.className = "bg-white p-5 rounded-lg shadow space-y-2 relative";
@@ -304,6 +355,12 @@ function renderResults(items) {
       </div>
 
       ${pdf ? `<a href="${pdf.link}" target="_blank" class="text-green-600 text-sm">📄 PDF</a>` : ""}
+<button
+  onclick="togglePin(${index})"
+  class="text-xs mt-2 ${pinned ? 'text-yellow-600' : 'text-gray-400'} hover:underline">
+  ⭐ ${pinned ? 'Đã ghim' : 'Ghim'}
+</button>
+
     </div>
 </div>
     `;
@@ -468,6 +525,191 @@ document.querySelectorAll('input[name="timeRange"]').forEach(radio => {
     }
   });
 });
+function togglePin(index) {
+  const item = LAST_RESULTS[index];
+  if (!item) return;
+
+  const exists = PINNED_ITEMS.find(p => p.link === item.link);
+
+  if (exists) {
+    PINNED_ITEMS = PINNED_ITEMS.filter(p => p.link !== item.link);
+  } else {
+    PINNED_ITEMS.push({
+  ...item,
+  pinnedAt: new Date().toISOString()
+});
+
+  }
+
+  localStorage.setItem("pinnedItems", JSON.stringify(PINNED_ITEMS));
+  renderResults(LAST_RESULTS);
+renderPinnedPanel();
+
+}
+
+function isPinned(link) {
+  return PINNED_ITEMS.some(p => p.link === link);
+}
+function renderPinnedPanel() {
+  const panel = document.getElementById("pinnedPanel");
+  if (!panel) return;
+  PINNED_ITEMS = JSON.parse(localStorage.getItem("pinnedItems")) || [];
+  panel.innerHTML = "";
+
+  if (PINNED_ITEMS.length === 0) {
+    panel.innerHTML =
+      "<p class='text-gray-400 italic'>Chưa có bài nào được ghim</p>";
+    return;
+  }
+
+  PINNED_ITEMS.forEach(item => {
+    const div = document.createElement("div");
+    div.className =
+      "border rounded p-2 hover:bg-gray-50 cursor-pointer";
+
+    div.innerHTML = `
+  <div class="space-y-2">
+
+    <!-- LINK TIÊU ĐỀ: CLICK RIÊNG -->
+    <a href="${item.link}"
+       target="_blank"
+       class="block font-medium text-indigo-600 hover:underline">
+      ${item.title}
+    </a>
+
+    <!-- THÔNG TIN -->
+<p class="text-xs text-gray-500">
+  ${item.authors || ""} · ${item.year || ""}
+</p>
+
+<p class="text-xs text-gray-400">
+  📌 Ghim ngày: ${item.pinnedAt ? new Date(item.pinnedAt).toLocaleDateString("vi-VN") : ""}
+</p>
+
+    <!-- TEXTAREA: ĐỘC LẬP -->
+    <input
+  type="text"
+  class="w-full border rounded px-2 py-1 text-sm"
+  placeholder="Nhãn / Chủ đề (VD: Lý thuyết, Thực nghiệm, Cốt lõi)"
+  onblur="saveTag('${item.link}', this.value)"
+  value="${item.tag || ''}">
+<textarea
+      class="w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+      placeholder="Ghi chú cá nhân..."
+      onblur="saveNote('${item.link}', this.value)"
+    >${item.note || ""}</textarea>
+
+    <!-- BỎ GHIM -->
+    <button
+      onclick="unpinItem('${item.link}')"
+      class="text-xs text-red-500 hover:underline">
+      Bỏ ghim
+    </button>
+
+  </div>
+`;
+
+   panel.appendChild(div);
+  });
+}
+renderPinnedPanel();
+function saveNote(link, note) {
+  let pinned = JSON.parse(localStorage.getItem("pinnedItems")) || [];
+
+  pinned = pinned.map(item => {
+    if (item.link === link) {
+      return {
+        ...item,
+        note: note
+      };
+    }
+    return item;
+  });
+
+  localStorage.setItem("pinnedItems", JSON.stringify(pinned));
+}
+function saveTag(link, tag) {
+  let pinned = JSON.parse(localStorage.getItem("pinnedItems")) || [];
+
+  pinned = pinned.map(item => {
+    if (item.link === link) {
+      return { ...item, tag: tag };
+    }
+    return item;
+  });
+
+  localStorage.setItem("pinnedItems", JSON.stringify(pinned));
+}
+function unpinItem(link) {
+  let pinned = JSON.parse(localStorage.getItem("pinnedItems")) || [];
+
+  // LOẠI BỎ BÀI CÓ LINK TƯƠNG ỨNG
+  pinned = pinned.filter(item => item.link !== link);
+
+  // LƯU LẠI
+  localStorage.setItem("pinnedItems", JSON.stringify(pinned));
+
+  // CẬP NHẬT BIẾN TOÀN CỤC
+  PINNED_ITEMS = pinned;
+
+  // VẼ LẠI PANEL + KẾT QUẢ
+  renderPinnedPanel();
+  renderResults(LAST_RESULTS);
+}
+function exportPinnedCSV() {
+  const pinned = JSON.parse(localStorage.getItem("pinnedItems")) || [];
+
+  if (pinned.length === 0) {
+    alert("Chưa có bài nào được ghim");
+    return;
+  }
+
+  let csv = "Title,Authors,Year,Link,Pinned Date,Note\n";
+
+  pinned.forEach(item => {
+    const title = `"${(item.title || "").replace(/"/g, '""')}"`;
+    const authors = `"${(item.authors || "").replace(/"/g, '""')}"`;
+    const year = item.year || "";
+    const link = item.link || "";
+    const pinnedDate = item.pinnedAt
+      ? new Date(item.pinnedAt).toLocaleDateString("vi-VN")
+      : "";
+    const note = `"${(item.note || "").replace(/"/g, '""')}"`;
+
+    csv += `${title},${authors},${year},${link},${pinnedDate},${note}\n`;
+  });
+
+  downloadFile("pinned_articles.csv", csv);
+}
+function exportPinnedBibTeX() {
+  const pinned = JSON.parse(localStorage.getItem("pinnedItems")) || [];
+
+  if (pinned.length === 0) {
+    alert("Chưa có bài nào được ghim");
+    return;
+  }
+
+  let bib = "";
+  bib += "% Exported from Personal Academic Tool\n\n";
+
+  pinned.forEach((item, i) => {
+    const authors = item.publication_info?.authors
+      ? item.publication_info.authors.map(a => a.name).join(" and ")
+      : "Unknown";
+
+    const year = item.publication_info?.year || "????";
+
+    bib += `@article{pinned${i},
+  title={${item.title || ""}},
+  author={${authors}},
+  year={${year}},
+  url={${item.link || ""}}
+}\n\n`;
+  });
+
+  downloadFile("pinned_articles.bib", bib);
+}
+
 </script>
 
 </body>
